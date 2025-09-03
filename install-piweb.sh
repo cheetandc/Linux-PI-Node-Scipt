@@ -19,7 +19,7 @@ fi
 # Vytvoření skriptu pro Python HTTP server
 cat << 'EOF' > ~/pyhttp_server.sh
 #!/bin/bash
-nohup python3 -m http.server 8080 --bind 127.0.0.1 > ~/pyhttp_server.log 2>&1 &
+nohup python3 -m http.server 8080 --bind 0.0.0.0 > ~/pyhttp_server.log 2>&1 &
 EOF
 
 chmod +x ~/pyhttp_server.sh
