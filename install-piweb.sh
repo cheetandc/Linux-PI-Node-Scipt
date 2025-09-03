@@ -1,61 +1,44 @@
 #!/bin/bash
 
-# Cesta ke skriptu v domovském adresáři uživatele
-SCRIPT_PATH="$HOME/refresh_status.sh"
-
-# Vytvoření skriptu refresh_status.sh s jednoduchým obsahem (ukázkový)
-cat > "$SCRIPT_PATH" << 'EOF'
+# Vytvoření refresh_status.sh v ~
+cat << 'EOF' > ~/refresh_status.sh
 #!/bin/bash
-
-REFRESH_INTERVAL=${1:-60}
-
-cd /tmp
-pi-node status > pinode_status.txt 2>&1
-
-cat > status.html << HTML_EOF
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Pi Node Status</title>
-    <meta http-equiv="refresh" content="${REFRESH_INTERVAL}">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <style>
-        body { font-family: monospace; background: #000; color: #0f0; padding: 20px; }
-        pre { font-size: 14px; line-height: 1.2; white-space: pre-wrap; }
-    </style>
-</head>
-<body>
-    <h1>🚀 Pi Node Status</h1>
-    <p><strong>Aktualizace:</strong> $(date)</p>
-    <hr>
-    <pre>$(cat pinode_status.txt)</pre>
-    <hr>
-    <small>Auto-refresh každých ${REFRESH_INTERVAL} sekund</small>
-</body>
-</html>
-HTML_EOF
+echo "Aktualizace statusu: $(date)" >> ~/status.log
 EOF
 
-# Nastavení spustitelných práv
-chmod +x "$SCRIPT_PATH"
-echo "Skript \"$SCRIPT_PATH\" byl vytvořen a nastaven jako spustitelný."
+chmod +x ~/refresh_status.sh
+echo "Soubor refresh_status.sh byl vytvořen a nastaven jako spustitelný."
 
-# Zeptat se uživatele na přidání do cronu
-read -p "Chcete přidat skript do automatického spouštění v cronu každou minutu? (a/n) " answer
-
-if [[ "$answer" =~ ^[aA]$ ]]; then
-    # Přidat cron job, pokud ještě není přidaný
-    CRON_JOB="* * * * * /bin/bash $SCRIPT_PATH 60 >> /tmp/refresh_status.log 2>&1"
-    crontab -l 2>/dev/null | grep -F "$SCRIPT_PATH" >/dev/null
-    if [ $? -eq 0 ]; then
-        echo "Cron úloha již existuje."
-    else
-        (crontab -l 2>/dev/null; echo "$CRON_JOB") | crontab -
-        echo "Cron úloha přidána: $CRON_JOB"
-    fi
+# Zeptat se na automatické spouštění (crontab)
+read -p "Chcete přidat refresh_status.sh do automatického spouštění (crontab)? [A/n]: " autostart
+if [[ "$autostart" =~ ^([aA]|[aA][nN][yY])$ || "$autostart" == "" ]]; then
+    (crontab -l 2>/dev/null; echo "*/10 * * * * $HOME/refresh_status.sh") | crontab -
+    echo "Přidáno do crontabu (každých 10 minut)."
 else
-    echo "Cron úloha nebyla přidána."
+    echo "Automatické spouštění nepřidáno."
 fi
+
+# Vytvoření skriptu pro Python HTTP server (port 8080)
+cat << 'EOF' > ~/pyhttp_server.sh
+#!/bin/bash
+nohup python3 -m http.server 8080 --bind 127.0.0.1 > ~/pyhttp_server.log 2>&1 &
+EOF
+
+chmod +x ~/pyhttp_server.sh
+echo "Soubor pyhttp_server.sh byl vytvořen a nastaven jako spustitelný."
+
+# Test binary nohup, instalace fallsback
+if command -v nohup &> /dev/null ; then
+    echo "nohup je nainstalovaný."
+else
+    echo "nohup není nainstalovaný. Provádím instalaci..."
+    sudo apt update && sudo apt install coreutils -y
+fi
+
+# Spustit python server rovnou
+~/pyhttp_server.sh
+echo "Python HTTP server byl spuštěn na pozadí (port 8080, log ~/pyhttp_server.log)."
+
+# Přidat spouštění python serveru do cronu po restartu
+(crontab -l 2>/dev/null; echo "@reboot $HOME/pyhttp_server.sh") | crontab -
+echo "Python HTTP server bude spuštěn po restartu systému automaticky."
