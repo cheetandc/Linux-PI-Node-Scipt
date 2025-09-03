@@ -10,8 +10,14 @@ echo "Soubor refresh_status.sh byl vytvořen a nastaven jako spustitelný."
 # Zeptání na automatické spouštění
 read -p "Chcete přidat refresh_status.sh do automatického spouštění (crontab)? [A/n]: " autostart
 if [[ "$autostart" =~ ^([aA]|[aA][nN][yY])$ || "$autostart" == "" ]]; then
-    (crontab -l 2>/dev/null; echo "*/10 * * * * $HOME/refresh_status.sh") | crontab -
-    echo "Přidáno do crontabu (každých 10 minut)."
+    CRON_REFRESH="*/10 * * * * $HOME/refresh_status.sh"
+    crontab -l 2>/dev/null | grep -F "$CRON_REFRESH" > /dev/null
+    if [ $? -ne 0 ]; then
+        (crontab -l 2>/dev/null; echo "$CRON_REFRESH") | crontab -
+        echo "refresh_status.sh bylo přidáno do crontabu."
+    else
+        echo "refresh_status.sh už v crontabu je."
+    fi
 else
     echo "Automatické spouštění nepřidáno."
 fi
@@ -35,5 +41,12 @@ fi
 ~/pyhttp_server.sh
 echo "Python HTTP server byl spuštěn na pozadí (port 8080, log ~/pyhttp_server.log)."
 
-(crontab -l 2>/dev/null; echo "@reboot $HOME/pyhttp_server.sh") | crontab -
-echo "Python HTTP server bude spuštěn po restartu systému automaticky."
+# Přidání spouštění pyhttp_server.sh po rebootu jen pokud tam není
+CRON_HTTP="@reboot $HOME/pyhttp_server.sh"
+crontab -l 2>/dev/null | grep -F "$CRON_HTTP" > /dev/null
+if [ $? -ne 0 ]; then
+    (crontab -l 2>/dev/null; echo "$CRON_HTTP") | crontab -
+    echo "pyhttp_server.sh bylo přidáno do crontabu (po restartu)."
+else
+    echo "pyhttp_server.sh už v crontabu je."
+fi
