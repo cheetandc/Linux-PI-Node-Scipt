@@ -1,15 +1,14 @@
+#!/bin/bash
+
 # Vytvoření refresh_status.sh v ~
 cat << 'EOF' > ~/refresh_status.sh
 #!/bin/bash
-
 # Nastavení intervalu (default 60 sekund)
 REFRESH_INTERVAL=${1:-60}
-
 cd /tmp
 pi-node status > pinode_status.txt 2>&1
-
-# Vytvořit pěkné HTML s jednou metodou auto-refresh (meta tag)
-cat > status.html << EOF
+# Vytvořit pěkné HTML s auto-refresh (meta tag)
+cat > status.html << EOHTML
 <!DOCTYPE html>
 <html>
 <head>
@@ -33,7 +32,7 @@ cat > status.html << EOF
     <small>Auto-refresh každých ${REFRESH_INTERVAL} sekund</small>
 </body>
 </html>
-EOF
+EOHTML
 EOF
 
 chmod +x ~/refresh_status.sh
@@ -42,23 +41,33 @@ echo "Soubor refresh_status.sh byl vytvořen a nastaven jako spustitelný."
 # Zeptání na automatické spouštění
 read -p "Chcete přidat refresh_status.sh do automatického spouštění (crontab)? [A/n]: " autostart
 if [[ "$autostart" =~ ^([aA]|[aA][nN][yY])$ || "$autostart" == "" ]]; then
-    CRON_REFRESH="*/10 * * * * $HOME/refresh_status.sh"
-    crontab -l 2>/dev/null | grep -F "$CRON_REFRESH" > /dev/null
+    CRON_REFRESH1="* * * * * $HOME/refresh_status.sh"
+    CRON_REFRESH2="* * * * * sleep 30; $HOME/refresh_status.sh"
+    # Přidat první řádek, pokud není
+    crontab -l 2>/dev/null | grep -F "$CRON_REFRESH1" > /dev/null
     if [ $? -ne 0 ]; then
-        (crontab -l 2>/dev/null; echo "$CRON_REFRESH") | crontab -
-        echo "refresh_status.sh bylo přidáno do crontabu."
+        (crontab -l 2>/dev/null; echo "$CRON_REFRESH1") | crontab -
+        echo "refresh_status.sh (každou minutu) bylo přidáno do crontabu."
     else
-        echo "refresh_status.sh už v crontabu je."
+        echo "První refresh_status.sh už v crontabu je."
+    fi
+    # Přidat druhý řádek se sleep 30, pokud není
+    crontab -l 2>/dev/null | grep -F "$CRON_REFRESH2" > /dev/null
+    if [ $? -ne 0 ]; then
+        (crontab -l 2>/dev/null; echo "$CRON_REFRESH2") | crontab -
+        echo "refresh_status.sh (sleep 30) bylo přidáno do crontabu."
+    else
+        echo "Druhý refresh_status.sh už v crontabu je."
     fi
 else
     echo "Automatické spouštění nepřidáno."
 fi
 
 # Vytvoření skriptu pro Python HTTP server
-cat << 'EOF' > ~/pyhttp_server.sh
+cat << 'EOHTTP' > ~/pyhttp_server.sh
 #!/bin/bash
 nohup python3 -m http.server 8080 --bind 0.0.0.0 > ~/pyhttp_server.log 2>&1 &
-EOF
+EOHTTP
 
 chmod +x ~/pyhttp_server.sh
 echo "Soubor pyhttp_server.sh byl vytvořen a nastaven jako spustitelný."
