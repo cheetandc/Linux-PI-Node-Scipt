@@ -6,9 +6,9 @@ cat << 'EOF' > ~/refresh_status.sh
 # Nastavení intervalu (default 60 sekund)
 REFRESH_INTERVAL=${1:-60}
 cd /tmp
-pi-node status > pinode_status.txt 2>&1
+/usr/local/bin/pi-node status > /tmp/pinode_status.txt 2>&1
 # Vytvořit pěkné HTML s auto-refresh (meta tag)
-cat > status.html << EOHTML
+cat > /tmp/status.html << EOHTML
 <!DOCTYPE html>
 <html>
 <head>
@@ -27,7 +27,7 @@ cat > status.html << EOHTML
     <h1>🚀 Pi Node Status</h1>
     <p><strong>Aktualizace:</strong> $(date)</p>
     <hr>
-    <pre>$(cat pinode_status.txt)</pre>
+    <pre>$(cat /tmp/pinode_status.txt)</pre>
     <hr>
     <small>Auto-refresh každých ${REFRESH_INTERVAL} sekund</small>
 </body>
