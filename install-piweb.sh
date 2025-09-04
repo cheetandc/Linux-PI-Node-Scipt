@@ -66,6 +66,7 @@ fi
 # Vytvoření skriptu pro Python HTTP server
 cat << 'EOHTTP' > ~/pyhttp_server.sh
 #!/bin/bash
+cd /tmp
 nohup python3 -m http.server 8080 --bind 0.0.0.0 > ~/pyhttp_server.log 2>&1 &
 EOHTTP
 
