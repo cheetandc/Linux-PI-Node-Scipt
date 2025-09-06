@@ -4,7 +4,7 @@ echo "===== AKTUALIZACE SYSTÉMU A ZÁKLADNÍCH BALÍČKŮ ====="
 sudo apt-get update
 sudo apt-get upgrade -y
 sudo apt-get install -y gnupg curl ca-certificates apt-transport-https software-properties-common lsb-release
-sudo apt install iotop
+sudo apt install iotop mc -y
 
 echo "===== INSTALACE DOCKERU ====="
 if ! command -v docker &> /dev/null; then
